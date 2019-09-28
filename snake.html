@@ -1,0 +1,471 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--saved from url=(0016)http://localhost-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gbk" />
+    <title>贪吃蛇</title>
+</head>
+<style type="text/css">
+    #my_canvas{
+        border:3px orange solid;
+        box-shadow:3px 4px 5px #333232;
+		-moz-box-shadow:3px 4px 5px #333232;
+		-webkit-shadow:3px 4px 5px #333232;
+		margin-top:10px;
+    }
+    .container{
+        width:1160px;
+        float:left;
+    }
+    #result_div{
+        height:25px;
+    }
+    #result_div input{
+        border:none;
+        outline:none;
+        border-radius:12%;
+        margin-left:10px;
+        background:#44cef6;
+    }
+    #result_div input:hover{
+        background:#2add9c;
+    }
+    .comment{
+        width:170px;
+        height:360px;
+        border:1px red solid;
+        margin-top:100px;
+        margin-right:5px;
+        float:left;
+        color:red;
+        box-shadow:1px 1px 1px red;
+		-moz-box-shadow:1px 1px 1px red;
+		-webkit-shadow:1px 1px 1px red;
+    }
+</style>
+<body>
+    <div class="comment">
+        <p>&nbsp;↑ ↓ ← → W A S D<br>&nbsp;控制蛇的方向</p>
+        <p>&nbsp;Enter回车游戏开始</p>
+        <p>&nbsp;空格游戏暂停</p>
+        <p>&nbsp;连续两下ESC返回首页</p>
+        <p>&nbsp;鼠标双击选择模式</p>
+        <p>&nbsp;简单模式5分一食物</p>
+        <p>&nbsp;正常模式10分一食物</p>
+        <p>&nbsp;困难模式15分一食物</p>
+        <p>&nbsp;魔鬼模式50分一食物</p>
+    </div>
+    <div class="container">
+        <div id="result_div">
+            <input type="button" value="简易模式" id="easy_btn" ondblclick="easyMode()"/>
+            <input type="button" value="正常模式" id="normal_btn" ondblclick="normalMode()"/>
+            <input type="button" value="困难模式" id="diff_btn" ondblclick="diffMode()"/>
+            <input type="button" value="魔鬼模式" id="demon_btn" ondblclick="demonMode()"/>
+            <input type="button" value="无墙模式" id="wall_btn" ondblclick="setNotWall()"/>
+            <span style="margin-left:70px;font-size:18px;">分数:</span>
+            <span id="total_score" style="color:red;font-size:20px;">0</span>
+            <span  style="margin-left:70px;font-size:18px;color:black;">蛇的长度: </span>
+            <span id="snake_length" style="font-size:20px;color:red;"></span>
+
+            <span style="margin-left:70px;font-size:18px;">历史最高分:</span>
+            <span id="max_score" style="color:red;font-size:20px;">0</span>
+            <span  style="margin-left:70px;font-size:18px;color:black;">最长: </span>
+            <span id="max_length" style="font-size:20px;color:red;">0</span>
+        </div>
+        <canvas id="my_canvas" width="1160" height="660"></canvas>
+    </div>
+</body>
+<script type="text/javascript">
+    var mCanvas = document.getElementById("my_canvas");
+    var context = mCanvas.getContext("2d");
+    
+    var movement = 120  			//蛇的移动速度越小越快
+    var snake_head_color = "red";   //蛇头颜色
+    var rect_color = "gray";    	//方块颜色
+    var score = 0;  				//分数
+    var history_max_score = 0;  	//历史最高分
+    var max_length = 0;  			//历史最高长度
+    var score_increment = 10;   	//默认一个食物10分
+    var hasWall = false;
+    var green = "#2add9c";
+    var blue = "#44cef6";
+    var red = "#ff2d51";
+
+    var total_score = document.getElementById("total_score");
+    var snake_length = document.getElementById("snake_length");
+    var max_score_span = document.getElementById("max_score");
+    var max_length_span = document.getElementById("max_length");
+
+    //从Cookie取出历史最高
+    var max_score = getCookie("max_score");
+    var max_length = getCookie("max_length");
+    console.log(max_score);
+    console.log(max_length);
+    if(max_score != null && max_score != 0){
+        max_score_span.innerText = max_score;
+    }
+
+    if(max_length != null && max_length != 0){
+        max_length_span.innerText = max_length;
+    }
+
+    var easy_btn = document.getElementById("easy_btn");
+    var normal_btn = document.getElementById("normal_btn");
+    var diff_btn = document.getElementById("diff_btn");
+    var demon_btn = document.getElementById("demon_btn");
+    var wall_btn = document.getElementById("wall_btn");
+
+    var modes = [];
+    modes.push(easy_btn);
+    modes.push(normal_btn);
+    modes.push(diff_btn)
+    modes.push(demon_btn);
+
+    // 无墙模式
+    function setNotWall(){
+        if(hasWall == false){
+            hasWall = true;
+            wall_btn.style.background = green;
+        }else{
+             hasWall = false;
+             wall_btn.style.background = blue;
+        }
+
+    }
+
+    //简易模式
+    function easyMode(){
+        movement = 200;
+        score_increment = 5;
+        for(var i=0;i<modes.length;i++){
+            modes[i].style.background = blue;
+        }
+        easy_btn.style.background = green;
+    }
+
+    //正常模式
+    function normalMode(){
+         movement = 110;
+         score_increment = 10;
+         for(var i=0;i<modes.length;i++){
+            modes[i].style.background = blue;
+         }
+         normal_btn.style.background = green;
+    }
+
+    //困难模式
+    function diffMode(){
+         movement = 50;
+         score_increment = 15;
+         for(var i=0;i<modes.length;i++){
+            modes[i].style.background = blue;
+         }
+         diff_btn.style.background = green;
+    }
+
+    //魔鬼模式
+    function demonMode(){
+        movement = 25;
+        score_increment = 50;
+        for(var i=0;i<modes.length;i++){
+            modes[i].style.background = blue;
+        }
+        demon_btn.style.background = green;
+    }
+
+    //构造方块对象
+    function Rect(x,y,w,h,color){
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.color = color;
+    }
+
+    //画方块的方法
+    Rect.prototype.draw = function(){
+        context.beginPath();
+        context.fillStyle= this.color;
+        context.rect(this.x,this.y,this.w,this.h);
+        context.fill();
+        context.stroke();
+    }
+
+    //构造蛇对象
+    function Snake(){
+
+        //定义一个数组存放一整条蛇的方块对象
+        var snakeArray = [];
+        var start_num = 4;  //方块开始数量
+        this.snake_head_color = snake_head_color;   //蛇头颜色
+        this.rect_color = rect_color;    //方块颜色
+
+        //生成4个灰色方块
+        for(var i=0;i<start_num;i++){
+            var rect = new Rect(i*20,0,20,20,this.rect_color);
+            snakeArray.splice(0,0,rect);
+        }
+
+        var head = snakeArray[0];
+        head.color = this.snake_head_color;
+
+        this.head = snakeArray[0];
+        this.snakeArray = snakeArray;
+
+        //给定初始位置向右(keyCode右箭头)
+        this.direction = 39;
+    }
+
+    //画蛇的方法
+    Snake.prototype.draw = function (){
+        for(var i=0;i<this.snakeArray.length;i++){
+            this.snakeArray[i].draw();
+        }
+    }
+
+    //蛇移动的方法
+    Snake.prototype.move = function(){
+        //1、画一个方块位置与蛇头重叠
+        //2、将这个方块插入蛇头后面一个的位置
+        //3、然后将最后一个方块删除即可
+        //4、将蛇头向指定的方向移动一格
+
+        var rect = new Rect(this.head.x,this.head.y,this.head.w,this.head.h,this.rect_color);
+        this.snakeArray.splice(1,0,rect);
+
+        //判断是否吃到食物
+        if(isEat()){
+            score +=score_increment;
+            total_score.innerText = score;
+            food = new getRandomFood();
+        }else{
+            this.snakeArray.pop();
+        }
+
+        //设置蛇头的运动方向，37、A(65)左，38、W(87)上，39、D(68)右，40、S(83)下
+        if(this.direction==37||this.direction==65){ //左
+            this.head.x -= this.head.w;
+        }else if(this.direction==38||this.direction==87){//上
+            this.head.y -= this.head.h;
+        }else if(this.direction==39||this.direction==68){//右
+            this.head.x += this.head.w;
+        }else if(this.direction==40||this.direction==83){//下
+            this.head.y += this.head.h;
+        }
+
+        //GameOver判定
+        //撞墙
+        if(this.head.x+1 >mCanvas.width || this.head.x<0 || this.head.y+1>mCanvas.height || this.head.y<0){
+
+            //判定是否无墙模式
+            if(hasWall){
+                if(this.head.x > mCanvas.width){
+                    this.head.x = 0;
+                }
+
+                if(this.head.x < 0){
+                    this.head.x = mCanvas.width;
+                }
+
+                if(this.head.y > mCanvas.height){
+                    this.head.y = 0;
+                }
+
+                if(this.head.y < 0 ){
+                    this.head.y = mCanvas.height;
+                }
+            }else{
+                closeInterval();    //关闭定时器
+                setTimeout(function(){
+                    //location.reload();
+                    game_over();    //游戏结束
+                },1500);
+            }
+
+
+        }
+
+        //撞自己
+        for(var i=1;i<this.snakeArray.length;i++){
+            if(this.snakeArray[i].x == this.head.x && this.snakeArray[i].y == this.head.y){
+                closeInterval();
+                setTimeout(function(){
+                    //location.reload();
+                    game_over();
+                },1500);
+            }
+        }
+    }
+
+    //画出初始的蛇
+    var snake = new Snake();
+    snake.draw();
+    snake_length.innerText = snake.snakeArray.length;
+
+    //画出初始的食物
+    var food = new getRandomFood();
+
+    //定时器
+    /*var timer = setInterval(function (){
+        context.clearRect(0,0,mCanvas.width,mCanvas.height);
+        food.draw();
+        snake.move();
+        snake.draw();
+    },100);*/
+
+    var timer = null;
+     //开启定时器
+    function startInterval(){
+            if(timer==null){
+                timer = setInterval(function (){
+                    context.clearRect(0,0,mCanvas.width,mCanvas.height);
+                    food.draw();
+                    snake.move();
+                    snake.draw();
+                    snake_length.innerText = snake.snakeArray.length;
+                },movement);
+            }
+    }
+
+    //结束定时器
+     function closeInterval(){
+           if(timer !=null){
+                 clearInterval(timer);
+                 timer = null;
+           }
+     }
+
+     //游戏结束
+     function game_over(){
+            if(score > history_max_score){
+                history_max_score = score;
+                setCookie("max_score",history_max_score,30);
+                max_score_span.innerText = history_max_score;
+            }
+            if(snake.snakeArray.length > max_length){
+                 max_length = snake.snakeArray.length
+                 setCookie("max_length",max_length,30);
+                 max_length_span.innerText = max_length;
+            }
+            snake = null;
+            score = 0;
+            total_score.innerText = score;
+            context.clearRect(0,0,mCanvas.width,mCanvas.height);
+            snake = new Snake();
+            food = new getRandomFood();
+            snake.draw();
+            snake_length.innerText = snake.snakeArray.length;
+     }
+
+    var escCount = 0;
+    //键盘事件
+    document.onkeydown = function(e){
+        var ev = e||window.event;
+
+        //37、A(65)左，38、W(87)上，39、D(68)右，40、S(83)下
+        if(ev.keyCode==37||ev.keyCode==65){ //左
+            if(snake.direction !==39){
+                snake.direction = 37;
+            }
+        }else if(ev.keyCode==39||ev.keyCode==68){   //右
+            if(snake.direction !== 37){
+                snake.direction = 39;
+            }
+        }else if(ev.keyCode==38||ev.keyCode==87){   //上
+            if(snake.direction !== 40){
+                snake.direction = 38;
+            }
+        }else if(ev.keyCode==40||ev.keyCode==83){   //下
+            if(snake.direction !== 38){
+                snake.direction = 40;
+            }
+        }else if(ev.keyCode==13){
+            //回车开始游戏
+            startInterval();
+        }else if(ev.keyCode==27){
+            //连续按ESC退出游戏并返回首页
+            //closeInterval();
+            escCount++;
+            setTimeout(function(){
+                escCount=0;
+            },500);
+            if(escCount >= 2){
+                location.href="../home.html";
+                console.log(escCount);
+                escCount = 0;
+            }
+        }else if(ev.keyCode==32){
+            //空格暂停游戏
+            closeInterval();
+        }
+        //alert(ev.keyCode);
+        ev.preventDefault();
+    }
+
+    //随机函数
+    function getNumberInRange(min,max){
+        var range = max-min;
+        var r = Math.random();//0-1之间的随机数
+        return Math.round(r*range+min);//向上舍入得整数
+    }
+
+     //构造食物对象
+    function getRandomFood(){
+        //颜色数组
+        var colors = ["red","yellow","blue","green","gray","pink","aqua"];
+
+        //判定食物是否在蛇身上，如果重合，则重新生成一遍
+        var isOnSnake = true;
+
+        while(isOnSnake){
+            isOnSnake = false;
+            var indexX = getNumberInRange(0,mCanvas.width/20-1);
+            var indexY = getNumberInRange(0,mCanvas.height/20-1);
+            var colorIndex = Math.floor(Math.random()*colors.length);
+            var rect = new Rect(indexX*20,indexY*20,20,20,colors[colorIndex]);
+            for(var i=0;i<snake.snakeArray.length;i++){
+                if(snake.snakeArray[i].x==rect.x && snake.snakeArray[i].y == rect.y){
+                    isOnSnake = true;
+                    break;
+                }
+            }
+        }
+        return rect;
+    }
+
+    //判定吃到食物，即蛇头坐标与食物坐标重合
+    function isEat(){
+        if(snake.head.x == food.x && snake.head.y == food.y){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    //保存Cookie值
+    function setCookie(name,value,days){
+        var d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        var expires = "; expires=" + d.toGMTString();
+        document.cookie = name + "=" + value + expires + "; path=/";
+    }
+
+    //获取Cookie值
+    function getCookie(cname){
+        var name = cname + "=";
+        var ca = document.cookie.split(";");
+        for(var i=0;i<ca.length;i++){
+            var c = ca[i].trim();
+            if(c.indexOf(name)==0){
+                return c.substring(name.length,c.length);
+            }
+        }
+        return null;
+    }
+
+    //删除Cookie
+    function removeCookie(name){
+        setCookie(name,"",-1);
+    }
+</script>
+</html>
