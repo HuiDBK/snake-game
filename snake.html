@@ -48,7 +48,6 @@
         <p>&nbsp;↑ ↓ ← → W A S D<br>&nbsp;控制蛇的方向</p>
         <p>&nbsp;Enter回车游戏开始</p>
         <p>&nbsp;空格游戏暂停</p>
-        <p>&nbsp;连续两下ESC返回首页</p>
         <p>&nbsp;鼠标双击选择模式</p>
         <p>&nbsp;简单模式5分一食物</p>
         <p>&nbsp;正常模式10分一食物</p>
@@ -382,22 +381,21 @@
         }else if(ev.keyCode==13){
             //回车开始游戏
             startInterval();
-        }else if(ev.keyCode==27){
-            //连续按ESC退出游戏并返回首页
-            //closeInterval();
-            escCount++;
-            setTimeout(function(){
-                escCount=0;
-            },500);
-            if(escCount >= 2){
-                location.href="../home.html";
-                console.log(escCount);
-                escCount = 0;
-            }
         }else if(ev.keyCode==32){
             //空格暂停游戏
             closeInterval();
-        }
+        }//else if(ev.keyCode==27){
+        //     //连续按ESC退出游戏并返回首页
+        //     //closeInterval();
+        //     escCount++;
+        //     setTimeout(function(){
+        //         escCount=0;
+        //     },500);
+        //     if(escCount >= 2){
+        //         location.href="../home.html";
+        //         console.log(escCount);
+        //         escCount = 0;
+        //     }
         //alert(ev.keyCode);
         ev.preventDefault();
     }
